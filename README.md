@@ -1,7 +1,7 @@
 # ORIE 4741 Project
 Repository for ORIE 4741 term project
 
-Project name: Who is the average anime enjoyer?
+Project name: Can we predict anime viewing patterns using demographics?
 
 Names and NetIDs:
 
