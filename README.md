@@ -1,7 +1,7 @@
 # ORIE 4741 Project
 Repository for ORIE 4741 term project
 
-Project name: \<insert name here\>
+Project name: Who is the average anime enjoyer?
 
 Names and NetIDs:
 
