@@ -1,0 +1,62 @@
+---
+title: "regression anime analysis"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Initial regression
+The first question we sought to ask in our project is, "Can we predict how much anime someone has watched?"
+
+For this regression, we will only be using the *users_cleaned* dataset with the initial feature engineering described earlier. 
+
+Here is a diagram of the regression we'll be performing:
+
+# Insert diagram here (also need justification of the year joined and 
+# year last online as demographics)
+
+Using all of these features will extract as much information as we can from our dataset, and will therefore help us to avoid underfitting. With this many features, overfitting is certainly a concern, but we will be using various techniques to avoid overfitting which we'll discuss in the next sections.
+
+For starters, in order to evaluate each regression technique, we divided the dataset using an 80:20 train:test split.
+
+
+## Linear regression
+Naturally, our first approach was to use simple linear regression. Unfortunately, our 
+model turned out to be rather unstable. The intercept was $2.08 \times 10^{12}$, and many of the 
+coefficients were on the order of $10^{10}$. Additionally, we suspected that some of the features were collinear because of the large, unstable coefficients. We tried normalizing the features, but this did not
+improve the results.
+
+## Lasso regression
+In order to stabilize the model, we modified our regression model to include the $l_1$ (Lasso) regularizer:
+$$\min{\sum_{i=1}^n (y_i -w^T x_i)^2 + \lambda \sum_{i=1}^n |w_i| }$$
+
+As we can see, we need to select the regularization parameter $\lambda$. In order to wisely choose this parameter (which will avoid overfitting), we used 5-fold cross vaildation and randomly tested 1,000 possible values of $\lambda$ from 0.001 to 1. The optimal parameter, which we ended up using in the actual regression, was 0.101.
+
+The advantage of the Lasso is that it chooses a model that is both stable and sparse. Here is a table showing the *nonzero* weights selected by the regression.
+
+## insert weights
+
+
+Importantly, the model did not overfit; the training MSE was 2,238 and the testing MSE was 2,074.
+Because of scaling, the MSE's are difficult to interpret on their own. Instead, we can use the coefficient of determination $R^2$ to analyze the effectiveness of this model. The coefficient of determination is a measurement of the proportion of variation in the dependent variable that can be measured by the covariates (wikpedia: https://en.wikipedia.org/wiki/Coefficient_of_determination). The $R^2$ for the training data was 0.255, and the $R^2$ for the testing data was 0.257. 
+
+Although these $R^2$ values may seem low, viewership data is quite noisy, so we were  satisfied with this result since our model does give a general sense of whether a given person is more likely to have watched more anime. This will be discussed more in the takeaways section.
+
+## Random forest
+As an attempt to improve the accuracy of our model, we decided to fit a random forest regressor on our training data. Random forest regressors have many hyperparmeters to choose from, but of the most concern to us were the number of trees in the forest and the maximum depth of each tree. By default, sklearn's random forest implementation allows 100 trees per forest and unlimited depth of each tree! After an initial trial, these defaults led to massive overfitting. To fix this, we once again ran 5-fold randomized CV (with 100 iterations) to choose possible parameter values between 1-50 for the number of trees, and 1-10 for the maximum depth of each tree. The optimal parameters chosen were 40 estimators with a max depth of 6.
+
+
+# potentially insert feature importance chart (don't include the locations, but 
+#say it's hard to interpret their feat importance )
+
+
+The training MSE was 1990; the testing MSE was 1966, indicating that we chose parameters wisely to avoid overfitting. 
+
+The training $R^2$ was 0.338, and the testing $R^2$ was 0.299. 
+Therefore, the random forest model was able to provide slightly better predictive power than the lasso regression, as evidenced by slightly lower MSE scores, and more importantly, the higher coefficients of determination. 
+
+## Regression takeaways
+Although we couldn't construct any perfect models, both the ridge regression and random forest models provide useful insight into anime viewership. If we needed to predict the number of days someone has watched anime, the random forest model is more useful since it has a higher $R^2$ and lower MSE's. However, for the purposes of inference, which is probably more important this project, we would turn to the Lasso regression, since we know it only chose the *most important* features.
+
+
+
