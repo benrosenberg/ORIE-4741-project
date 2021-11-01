@@ -36,7 +36,7 @@ file|description
 `users_cleaned.csv`|cleaned version of `users_filtered.csv`
 
 
-The filtered versions of the files contain only those users with birth date, location, and gender filled. The cleaned versions of the filtered files have outliers removed (e.g., users with excessively large watch times), and nonsensical data removed (such as users with episode counts that exceed the episode count of a given anime). Of these files, we're going to be using the cleaned ones. The missing data that was removed in the cleaning process is not necessary in order to ensure that our analysis is done with sufficient rows; since we started with 80 million users, the paring-down of the usercount left us with enough data. 
+The filtered versions of the files contain only those users with birth date, location, and gender filled. The cleaned versions of the filtered files have outliers removed (e.g., users with excessively large watch times), and nonsensical data removed (such as users with episode counts that exceed the episode count of a given anime). Of these files, we're going to be using the cleaned ones. The missing data that was removed in the cleaning process is not necessary in order to ensure that our analysis is done with sufficient rows; since we started with around 300,000 users, the paring-down of the usercount left us with enough data. 
 
 ## Location data transformation
 
@@ -56,7 +56,7 @@ covariate | description
 -|----
 average rating | mean of the user's ratings of anime on their anime list
 join year | year that the user created an account on MAL
-age | age of the user, as defined by their date of birth
+age | age of the user, computed from user's date of birth
 year last online | last year the user was online
 gender (M, F, NB) | one-hot: user's gender (either male, female, or nonbinary)
 location (state) | one-hot: user's location (2-letter abbreviation of the user's location (state) in the US)
