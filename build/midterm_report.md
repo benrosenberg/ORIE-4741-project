@@ -1,6 +1,6 @@
 ---
 header-includes: |
-  \usepackage[left=0.3in, right=0.3in, top=0.4in, bottom=0.3in]{geometry}
+  \usepackage[left=0.3in, right=0.3in, top=0.3in, bottom=0.3in]{geometry}
   \usepackage{xcolor}
   \usepackage{marvosym}
   \usepackage{multicol}
@@ -15,9 +15,9 @@ header-includes: |
 {\large\today}
 \end{center}
 
-# Description of data
+# Description of data sources
 
-The data we're using in our project come from MyAnimeList.net, a site on which people can upload their lists of watched anime (animated, typically Japanese, TV shows and movies). MyAnimeList (henceforth referred to as MAL) is similar to [iMDB](https://www.imdb.com/): users can rate anime (1-10), leave reviews, and interact with other users in forums. In our analysis, we use a Kaggle dataset composed of data scraped from MAL regarding users and the anime they've watched. 
+The data we're using in our project come from MyAnimeList.net, a site on which people can upload their lists of watched anime (animated, typically Japanese, TV shows and movies). MyAnimeList (henceforth referred to as MAL) is similar to [\color{blue}iMDB](https://www.imdb.com/): users can rate anime (1-10), leave reviews, and interact with other users in forums. In our analysis, we use a [\color{blue}Kaggle dataset](https://www.kaggle.com/azathoth42/myanimelist) composed of data scraped from MAL regarding users and the anime they've watched. 
 
 ## Descriptions of datasets
 
@@ -46,7 +46,7 @@ Furthermore, we decided (for the sake of simplicity) to focus our analysis solel
 
 # Initial regression
 
-The first question we sought to ask in our project is, "Can we predict how much anime someone has watched?" For this regression, we will only be using the `users_cleaned` dataset with the initial feature engineering described earlier. 
+The first question we sought to ask in our project is, "Can we predict how much anime someone has watched?" For this regression, we will only be using the `users_cleaned` dataset with the initial feature engineering described earlier. The dependent variable will be the number of days of anime a user has watched, and the features are listed below.
 
 ## Feature selection 
 
@@ -108,10 +108,10 @@ The advantage of the Lasso is that it chooses a model that is both stable and sp
 \end{multicols}
 \end{center}
 
-These results indicate that men are more likely to have more days of anime views, and women are more likely to have fewer anime days. (The regression didn't have enough data points to infer viewership patterns about nonbinary individuals.) We also see that users who were recently online and users who joined earlier are more likely to have more anime days. Finally, users who had a *lower* average rating (and were more critical of anime in general) were more likely to have more anime hours. The one-hot locations that were selected did contribute to the model's predictive ability, but since these one-hots are inherently collinear, it is unfortunately difficult to make inferences about them.
+These results indicate that men are more likely to have more days of anime views, and women are more likely to have fewer anime days. (The regression didn't have enough data points to infer viewership patterns about nonbinary users.) We also see that users who were recently online and users who joined earlier are more likely to have more anime days. Finally, users who had a *lower* average rating (and were more critical of anime in general) were more likely to have more anime hours. The one-hot locations that were selected did contribute to the model's predictive ability, but since these one-hots are inherently collinear, it is unfortunately difficult to make inferences about them.
 
 Importantly, the model did not overfit; the training MSE was 2,238 and the testing MSE was 2,074. 
-Because of scaling, the MSE's are difficult to interpret on their own. Instead, we can use the coefficient of determination $\mathcal{R}^2$ to analyze the effectiveness of this model. The coefficient of determination is a measurement of the proportion of variation in the dependent variable that can be measured by the covariates\footnote{Wikpedia: https://en.wikipedia.org/wiki/Coefficient\_of\_determination}. The $\mathcal{R}^2$ for the training data was 0.255, and the $\mathcal{R}^2$ for the testing data was 0.257. 
+Because of scaling, the MSE's are difficult to interpret on their own. Instead, we can use the coefficient of determination $\mathcal{R}^2$ to analyze the effectiveness of this model. The coefficient of determination is a measurement of the proportion of variation in the dependent variable that can be measured by the covariates\footnote{\color{blue}https://en.wikipedia.org/wiki/Coefficient\_of\_determination}. The $\mathcal{R}^2$ for the training data was 0.255, and the $\mathcal{R}^2$ for the testing data was 0.257. 
 
 Although these $\mathcal{R}^2$ values may seem low, viewership data is quite noisy, so we were satisfied with this result since our model does give a general sense of whether a given person is more likely to have watched more anime. This will be discussed more in the takeaways section.
 
