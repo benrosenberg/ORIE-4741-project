@@ -1,0 +1,42 @@
+# Predicting anime ratings
+The next question we wanted to answer was, "Can we predict anime ratings?" To answer this question, we created a new dataset in which each entry represented a single user's rating for a particular anime. We wanted to include demographic covariates from our initial regression, so this dataset was generated using by of `users_cleaned` (US-only) and `animelists_cleaned` on the primary key anime username.
+
+We note that this is technically a multi-class classification problem, since each user can rate an anime $1,2,...,10$. However, we still use a regression here since we care more about predicting whether an anime is *highly rated* than we do about predicting the exact rating.
+
+## Feature selection
+Shown below is a table of the features used in our regression. Since each row is a user and an anime they watched, the goal is to predict how a user will rate a given anime.
+
+# table of covariates
+
+In order to create the [bag-of-words model](https://en.wikipedia.org/wiki/Bag-of-words_model) to represent anime titles, we took the top-50 most common words among the anime in `animelists_cleaned` and then generated a many-hot encoding for them. We removed common words like "the" and "a" from the analysis, and we treated plural and singular versions of the same word as one entry in the encoding.
+
+## Histogram-based gradient boosting
+Since the dataset includes every anime each user has watched, it is extremely large--around 2.5 million rows. Since we wanted a model that was both fast and accurate, we selected [histogram-based gradient boosting regression](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html#sklearn.ensemble.HistGradientBoostingRegressor). This method is very similar to the typical gradient-boosted ensemble, except that it [groups features together into a certain number of "bins,"](https://towardsdatascience.com/an-overview-of-boosting-methods-catboost-xgboost-adaboost-lightboost-histogram-based-gradient-407447633ac1) instead of treating them as continuously-distributed. This [dramatically speeds up runtime](https://machinelearningmastery.com/histogram-based-gradient-boosting-ensembles/).
+
+## Cross-validation for hyperparameter tuning
+As in our initial regression, we used a randomized grid-search with 25 iterations for hyperparameter tuning. Ultimately, cross-validation selected a max_depth of 
+
+53, learning_rate of 0.5, and max_bins of 100 (this represents how many bins the algorithm can make when it groups features together).
+
+## Feature Importance (SHAP)
+Since the histogram-based gradient boosting regressor did not have a feature importance attribute, we decided to use SHAP (Shapley Additive Explanations) values instead. SHAP values use a game theory approach to tell us how much each feature contributes to the prediction **(footnotes: https://christophm.github.io/interpretable-ml-book/shap.html#shap, https://towardsdatascience.com/a-novel-approach-to-feature-importance-shapley-additive-explanations-d18af30fc21b)**. Since SHAP can be slow on very large datasets, we used the first 100,000 entries of the training set for this analysis, but that is more than enough data to get a sense of feature importance.
+
+
+# feature importance figures (avg on left, summary on right)
+
+
+The figure on the left shows the top 10 mean SHAP values, which tell us how important each feature is to the model's predictions. The figure on the right is much more interesting. Each point on the plot is an actual training observation. A negative SHAP value indicates that the feature reduced the predicted rating, and a positive SHAP value indicates that the feature increased the prediction rating. The "Feature Value" gradient tells us how large or small the actual feature was. 
+
+As an example, we see that when users have spent many *days* watching anime, they are more likely to rate any given anime with a lower score, which makes sense since they are probably much more critical of anime in general. We see a similar trend with age, although there is a bit more noise there. Interestingly, with join_year, we see that a later join_year actually predicts a lower rating. This might seem contradicatory, but it is not because join_year is substantially different from days spent watching. There are many MyAnimeList users who recently joined but still logged all of the anime they had watched in the past on their new account. 
+
+Moving along, since there are many red points on both sides of the SHAP plot for California, we can't conclude how that feature alone impacts the model; it is still an important feature, but its importance might be derived from interactions with other features. This is also the case for gender attributes. Finally, we note that having "season" in the title implies a higher predicted rating. This is completely reasonable, since the anime which are renewed for more seasons (and advertise this fact in their titles) tend to be excellent shows.
+
+
+
+
+## Results and discussion
+We evaluated our model using a 75:25 train:test split. We achieved a training MSE of 2.33 and a testing MSE of 2.34, indicating that the model did not overfit. The training $R^2$ was 0.146 and the testing $R^2$ was 0.142. Although the $R^2$ values may seem low, it is actually quite good considering the use of the model. If we use the model to make several anime recommendations, it is very likely that the viewer will enjoy at least one of our suggestions. That is, the goal of the model is to predict whether a user will, in the most general terms, enjoy a given anime. Therefore, even if we cannot predict the exact rating, the model will likely be very good at generating recommendations.
+
+
+
+
