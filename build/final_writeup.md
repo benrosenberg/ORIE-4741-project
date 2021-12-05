@@ -5,6 +5,13 @@ header-includes: |
   \usepackage{marvosym}
   \usepackage{multicol}
   \usepackage{nopageno}
+  \usepackage{hyperref}
+  \hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=blue,      
+    urlcolor=blue,
+  }
 ---
 
 \begin{center} 
@@ -15,13 +22,28 @@ header-includes: |
 {\large\today}
 \end{center}
 
-# Introduction
+\vspace{1em}
 
-... ben
+\begin{center}\textbf{Abstract}\end{center}
+
+> Anime can be described as animated, typically Japanese, TV shows and movies. Although once a small industry localized to Japan, anime has become more and more popular around the world over the past decade. In 2017, anime was nearly a $20 billion industry\footnote{https://www.cnn.com/style/article/japan-anime-global-identity-hnk-intl/index.html}. 
+
+> As such, it is very important for anime studios and producers to understand their viewers. For our project, we aim to analyze viewing patterns of anime users based on their demographics. We use a dataset from MyAnimeList, a website similar to iMBD that allows users to track and rate the anime they’ve watched, and includes such features as gender, location, age, and total anime watchtime. 
+
+> In our analysis, after performing \hyperlink{initial-regression}{initial regressions} using linear, lasso (with $\ell_1$ regularizer), and random forest methods, we determined that ... . 
+
+> After performing the initial regressions, we turned to \hyperlink{clustering}{clustering} as a means of interpreting the data. We found that ... .
+
+> After clustering, we tried performing \hyperlink{predicting-anime-ratings}{additional regressions} on the dataset after we added 50 Bag of Words (BOW) features to the dataset, with respect to the anime titles in English. The results of this were ... .
+
+> Next, we discussed whether or not our analysis was a \hyperlink{wmd-and-fairness}{Weapon of Math Destruction} (WMD) and the potential fairness-related repercussions of our analysis. We determined that our model was *not* a WMD, due to its lack of severity with respect to the applications of it to society as a whole, the only protected demographic being gender and even that being shown to have minimal proportional difference across our dataset.
+
+> Finally, we \hypertarget{conclusion}{concluded} that ... .
+
 
 # Description of data sources
 
-The data we're using in our project come from MyAnimeList.net, a site on which people can upload their lists of watched anime (animated, typically Japanese, TV shows and movies). MyAnimeList (henceforth referred to as MAL) is similar to [\color{blue}iMDB](https://www.imdb.com/): users can rate anime (1-10), leave reviews, and interact with other users in forums. In our analysis, we use a [\color{blue}Kaggle dataset](https://www.kaggle.com/azathoth42/myanimelist) composed of data scraped from MAL regarding users and the anime they've watched. 
+The data we're using in our project come from MyAnimeList.net, a site on which people can upload their lists of watched anime. MyAnimeList (henceforth referred to as MAL) is similar to [\color{blue}iMDB](https://www.imdb.com/): users can rate anime (1-10), leave reviews, and interact with other users in forums. In our analysis, we use a [\color{blue}Kaggle dataset](https://www.kaggle.com/azathoth42/myanimelist) composed of data scraped from MAL regarding users and the anime they've watched. 
 
 ## Descriptions of datasets
 
@@ -139,12 +161,71 @@ Although we couldn't construct any perfect models, both the ridge regression and
 ... cooper
 
 # Predicting anime ratings
+The next question we wanted to answer was, "Can we predict anime ratings?" To answer this question, we created a new dataset in which each entry represented a single user's rating for a particular anime. We wanted to include demographic covariates from our initial regression, so this dataset was generated using by of `users_cleaned` (US-only) and `animelists_cleaned` on the primary key anime username.
 
-... zach
+We note that this is technically a multi-class classification problem, since each user can rate an anime $1,2,...,10$. However, we still use a regression here since we care more about predicting whether an anime is *highly rated* than we do about predicting the exact rating.
+
+## Feature selection
+Shown below is a table of the features used in our regression. Since each row is a user and an anime they watched, the goal is to predict how a user will rate a given anime.
+
+covariate | description
+-|----
+days spent watching | number of *days* (again, not hours or minutes, *days*) the user has spent of their life watching anime 
+age | age of the user, computed from user's date of birth
+join year | year that the user created an account on MAL
+gender (M, F, NB) | one-hot: user's gender (either male, female, or nonbinary)
+location (state) | one-hot: user's location (2-letter abbreviation of the user's location (state) in the US)
+word in title (English) | many-hot: whether a given word was found to be in the English version of the anime's title
+
+In order to create the [bag-of-words model](https://en.wikipedia.org/wiki/Bag-of-words_model) to represent anime titles, we took the top-50 most common words among the anime in `animelists_cleaned` and then generated a many-hot encoding for them. We removed common words like "the" and "a" from the analysis, and we treated plural and singular versions of the same word as one entry in the encoding.
+
+## Histogram-based gradient boosting
+Since the dataset includes every anime each user has watched, it is extremely large--around 2.5 million rows. Since we wanted a model that was both fast and accurate, we selected [histogram-based gradient boosting regression](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html#sklearn.ensemble.HistGradientBoostingRegressor). This method is very similar to the typical gradient-boosted ensemble, except that it [groups features together into a certain number of "bins,"](https://towardsdatascience.com/an-overview-of-boosting-methods-catboost-xgboost-adaboost-lightboost-histogram-based-gradient-407447633ac1) instead of treating them as continuously-distributed. This [dramatically speeds up runtime](https://machinelearningmastery.com/histogram-based-gradient-boosting-ensembles/).
+
+## Cross-validation for hyperparameter tuning
+As in our initial regression, we used a randomized grid-search with 25 iterations for hyperparameter tuning. Ultimately, cross-validation selected a `max_depth` of 53, `learning_rate` of 0.5, and `max_bins` of 100 (this represents how many bins the algorithm can make when it groups features together).
+
+## Feature Importance (SHAP)
+Since the histogram-based gradient boosting regressor did not have a feature importance attribute, we decided to use SHAP (Shapley Additive Explanations) values instead. SHAP values use a game theory approach to tell us how much each feature contributes to the prediction\footnote{https://christophm.github.io/interpretable-ml-book/shap.html\#shap}\footnote{https://towardsdatascience.com/a-novel-approach-to-feature-importance-shapley-additive-explanations-d18af30fc21b}. Since SHAP can be slow on very large datasets, we used the first 100,000 entries of the training set for this analysis, but that is more than enough data to get a sense of feature importance.
+
+![](shap_feature_importance.png){width=50%}
+![](shap_summary.png){width=50%}
+\begin{figure}[!h]
+\caption{Left: Feature importance; Right: Summary}
+\end{figure}
+
+The figure on the left shows the top 10 mean SHAP values, which tell us how important each feature is to the model's predictions. The figure on the right is much more interesting. Each point on the plot is an actual training observation. A negative SHAP value indicates that the feature reduced the predicted rating, and a positive SHAP value indicates that the feature increased the prediction rating. The "Feature Value" gradient tells us how large or small the actual feature was. 
+
+As an example, we see that when users have spent many *days* watching anime, they are more likely to rate any given anime with a lower score, which makes sense since they are probably much more critical of anime in general. We see a similar trend with age, although there is a bit more noise there. Interestingly, with `join_year`, we see that a later `join_year` actually predicts a lower rating. This might seem contradicatory, but it is not because `join_year` is substantially different from days spent watching. There are many MAL users who recently joined but still logged all of the anime they had watched in the past on their new account. 
+
+Moving along, since there are many red points on both sides of the SHAP plot for California, we can't conclude how that feature alone impacts the model; it is still an important feature, but its importance might be derived from interactions with other features. This is also the case for gender attributes. Finally, we note that having "season" in the title implies a higher predicted rating. This is completely reasonable, since the anime which are renewed for more seasons (and advertise this fact in their titles) tend to be excellent shows.
+
+## Results and discussion
+We evaluated our model using a 75:25 train:test split. We achieved a training MSE of 2.33 and a testing MSE of 2.34, indicating that the model did not overfit. The training $\mathcal R^2$ was 0.146 and the testing $\mathcal R^2$ was 0.142. Although the $\mathcal R^2$ values may seem low, it is actually quite good considering the use of the model. If we use the model to make several anime recommendations, it is very likely that the viewer will enjoy at least one of our suggestions. That is, the goal of the model is to predict whether a user will, in the most general terms, enjoy a given anime. Therefore, even if we cannot predict the exact rating, the model will likely be very good at generating recommendations.
 
 # WMD and Fairness
 
-... brennan
+## Is our analysis a Weapon of Math Destruction?
+
+In terms of the demographic questions we tackled, such as predicting how much anime someone has watched or determining demographic clusters of anime viewers, our model is not a WMD. The outcome is easily measurable since the website can keep track of the amount of time a given user spends watching anime. Furthermore, since we intend to perhaps use the results of our model for marketing or in-app recommendation purposes, the corresponding 'negative' consequences would be fewer advertisements or different recommendations to a certain demographic group. However, given the nature of our problem, even if one group or type of anime is systemically underrepresented in the recommendations made by our model, the repercussions are not incredibly severe (relative to those in college admissions, credit card applications, mortgage applications) as that group would merely be less inclined to watch anime. 
+
+With regards to predicting the quality of a given anime, again, our model is not a WMD. The outcome is easily measurable since the website can keep track of the ratings given to each show. Furthermore, since we intend to perhaps use the results of our model for recommendation purposes, the corresponding 'negative' consequences would be fewer recommendations for a certain type of show. However, even if certain types of anime were systematically underrepresented in the in-app recommendations, a self-fulfilling feedback loop is not necessarily created because users can still stumble on these shows independently or hear about them through word of mouth or social media which are likely stronger influences anyway. 
+
+## Fairness
+
+When it comes to fairness, the only protected attribute that we had access to was gender. In fact, an individual's gender was one of our top five most important attributes for predicting how much anime a given individual views, so it is certainly worth investigating our algorithmic fairness with respect to this characteristic. However, given that our problems were not classifications, the metrics from class are not directly applicable, so we shall investigate fairness differently. 
+
+In our clustering problem, we could look at the counterfactual fairness of our clusters as this is the only relevant metric. We see that flipping one's gender does not change our clusters at all. Intuitively, this makes sense, but due to the clustering nature of our problem, counterfactual fairness is not remarkably applicable when compared to its usage in classification problems. 
+
+Furthermore, we considered looking into the unawareness metric with respect to our algorithm's predictions. However, since our focus is on curating predictions for a given user, we prefer more accurate recommendations at the expense of unawareness of a protected trait. With regards to one's recommendations, using one's gender is not a discriminatory process, but rather one to ensure more accurate and enjoyable predictions for our users, and utilizing the information encapsulated in one's gender is substantially more beneficial than harmful in such a context.  
+
+When predicting a given user's watchtime, we saw that one's gender was one of our five most important traits for prediction. At first, we hypothesized that perhaps fewer females watch anime within the United States (when compared to the world's population), and thus that when we extrapolate our algorithm worldwide, we may misrepresent the importance of one's gender. If this was the case, perhaps in the United States our algorithm learns to minimize the importance of being female in its since they make up an insignificant proportion of the population. However, when we investigated our dataset in full, we saw that this was not the case. 
+
+![](users_by_gender.png)
+
+Surprisingly, in fact, we can see that the proportions were almost identical. Thus, if we used our model to then make predictions on the worldwide portion of our dataset, we could be reasonably confident that we will be fair with respect to gender. 
+
+Given the nature of our problem, both in its severity relative to other fields (parole, college admissions, etc.) and form (regression and clustering vs. classification), fairness with respect to gender is not as important or measurable as it would be in other contexts. However, given the above evidence, we are reasonably confident that our predictions are not discriminating against or misrepresenting an individual based on their gender. With that said, given the limitations of our analysis, it is still important to be mindful of this protected attribute because perhaps in real life there is a more equal split between male and female viewers, and in that case, our algorithms may not act as fairly as they should. 
 
 # Conclusion
 
