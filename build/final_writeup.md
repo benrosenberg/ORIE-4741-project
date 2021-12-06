@@ -6,7 +6,6 @@ header-includes: |
   \usepackage{xcolor}
   \usepackage{marvosym}
   \usepackage{multicol}
-  \usepackage{nopageno}
   \usepackage{hyperref}
   \hypersetup{
     colorlinks=true,
@@ -28,15 +27,15 @@ header-includes: |
 
 \begin{center}\textbf{Abstract}\end{center}
 
-> Anime can be described as animated, typically Japanese, TV shows and movies. Although once a small industry localized to Japan, anime has become more and more popular around the world over the past decade. In 2017, anime was nearly a $20 billion industry\footnote{\color{blue}https://www.cnn.com/style/article/japan-anime-global-identity-hnk-intl/index.html\color{black}}. 
+> Anime can be described as typically Japanese animated TV shows and movies. Although once a small industry localized to Japan, anime has become increasingly popular throughout the world over the past decade. In 2017, anime was a nearly $20 billion industry\footnote{\color{blue}https://www.cnn.com/style/article/japan-anime-global-identity-hnk-intl/index.html\color{black}}. 
 
 > As such, it is very important for anime studios and producers to understand their viewers. For our project, we aim to analyze viewing patterns of anime users based on their demographics. We use a dataset from MyAnimeList, a website similar to iMBD that allows users to track and rate the anime they’ve watched, and includes such features as gender, location, age, and total anime watchtime. 
 
-> In our analysis, after performing \hyperlink{initial-regression}{initial regressions} using linear, lasso (with $\ell_1$ regularizer), and random forest methods, we determined that users who identified as male tended to watch more anime than users who identified as female or nonbinary. Furthermore, users who joined the platform earlier or were more critical tended to watch more anime than newer users or users who gave higher ratings on average.
+> In our analysis, after performing \hyperlink{initial-regression}{initial regressions} using linear, lasso (with $\ell_1$ regularizer), and random forest methods, we determined that users who identified as male tended to watch more anime than users who identified as female or nonbinary. Furthermore, users who joined the platform earlier or rated anime more critically tended to watch more anime than newer users or users who gave higher ratings on average.
 
 > After performing the initial regressions, we turned to \hyperlink{clustering}{clustering} as a means of interpreting the data. Most relevantly, we found that the primary age range for users who watched the most anime was from 22 to 36 years, and (again) that users identifying as male tended to watch more anime on average.
 
-> After clustering, we tried performing \hyperlink{predicting-anime-ratings}{additional regressions} on the dataset with respect to rating. To this end, we added 50 Bag of Words (BOW) features to the dataset, using the English titles of the anime. The most relevant and significant results of this were that users who spent more time watching anime tended to give it lower ratings, corroborating our results in the initial regression, and that having "season" in the title of an anime tended to result in higher overall ratings.  Lastly, interestingly contradicting our initial regression results, we found that users who joined the platform later tended to be more critical in their ratings.
+> After clustering, we performed \hyperlink{predicting-anime-ratings}{additional regressions} on the dataset with respect to rating. To this end, we added 50 Bag of Words (BOW) features to the dataset, using the English titles of the anime. The most relevant and significant results of this were that users who spent more time watching anime tended to give it lower ratings, corroborating our results in the initial regression, and that having "season" in the title of an anime tended to result in higher overall ratings.  Lastly, interestingly contradicting our initial regression results, we found that users who joined the platform later tended to be more critical in their ratings.
 
 > Finally, we discussed whether or not our analysis was a \hyperlink{wmd-and-fairness}{Weapon of Math Destruction} (WMD) and the potential fairness-related repercussions of our analysis. We determined that our model was *not* a WMD, due to its lack of severity with respect to its applications to society as a whole, the only protected demographic being gender and even that being shown to have minimal proportional difference across our dataset.
 
@@ -49,7 +48,7 @@ The data we're using in our project come from MyAnimeList.net, a site on which p
 The Kaggle dataset is composed of several files, some of which are "cleaned" versions of others. A table of files and descriptions is as follows:
 
 file|description
--|-
+-|--
 `AnimeList.csv`|raw list of anime on MAL
 `UserAnimeList.csv`|collection of the individual anime that each user on the site has watched
 `UserList.csv`|list of users on the MAL site
@@ -71,7 +70,7 @@ Furthermore, we decided (for the sake of simplicity) to focus our analysis solel
 
 # Initial regression: Predicting anime watchtime
 
-The first question we sought to ask in our project is, "Can we predict how much anime someone has watched?" For this regression, we will only be using the `users_cleaned` dataset with the initial feature engineering described earlier. The dependent variable will be the number of days of anime a user has watched, and the features are listed below. Note that days are continuous; e.g., a user could have 20.5 or 0.275 days of anime watched.
+The first question we sought to ask in our project is, "Can we predict how much anime someone has watched?" For this regression, we will only be using the `users_cleaned` dataset with the initial feature engineering described earlier. The dependent variable will be the number of days of anime a user has watched, and the features are listed below. Note that days are continuous; e.g., a user could have 20.5 or 0.275 days of anime watched. A distribution of the anime watchtimes in our dataset can be found in the \hyperlink{appendix}{appendix}.
 
 ## Feature selection 
 
@@ -249,7 +248,7 @@ Furthermore, we considered looking into the unawareness metric with respect to o
 
 When predicting a given user's watchtime, we saw that one's gender was one of our five most important traits for prediction. At first, we hypothesized that perhaps fewer females watch anime within the United States (when compared to the world's population), and thus that when we extrapolate our algorithm worldwide, we may misrepresent the importance of one's gender. If this was the case, perhaps in the United States our algorithm learns to minimize the importance of being female in its since they make up an insignificant proportion of the population. However, when we investigated our dataset in full, we saw that this was not the case. 
 
-![Negligible difference between female and male representation](users_by_gender.png){width=50%}
+![Negligible difference between gender representation within the US and internationally](users_by_gender.png){width=55%}
 
 Surprisingly, in fact, we can see that the proportions were almost identical. Thus, if we used our model to then make predictions on the worldwide portion of our dataset, we could be reasonably confident that we will be fair with respect to gender. 
 
@@ -266,3 +265,8 @@ Overall in our analysis, we determined a couple of mainly significant things:
 
 This information could be very important to any anime studio deciding which show to produce, or to anime distributors deciding which groups to target their advertising campaigns to for upcoming titles, or even for corporations like Netflix and Crunchyroll deciding which anime to purchase from distributors. The age range and gender demographics are the most directly useful as they can be directly translated into advertising, while the information about seasons could be indicative to a studio that they should attempt to adapt additional seasons of an anime that was successful in its first season when they have the chance. The least directly relevant result is the one regarding the critical nature of long-term users. If anything, it could serve as a reminder to studios adapting older works or continuing an anime adaptation for additional seasons that it is very important to live up to the quality of the previous productions or source material, so as not to alienate long-time fans of the original work.
 
+---
+
+## Appendix 
+
+![Distribution of anime watchtimes](coopis2.png){width=80%}
