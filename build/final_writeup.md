@@ -17,18 +17,18 @@ header-includes: |
 ---
 
 \begin{center} 
-{\Large ORIE 4741 Project Final Report}
+{\Huge ORIE 4741 Project Final Report}
 
-{\large Ben Rosenberg (bar94), Brennan O'Connor (bo92), Cooper McGuire (cjm424), Zach Katz (zdk4)}
+{\Large Ben Rosenberg (bar94), Brennan O'Connor (bo92), Cooper McGuire (cjm424), Zach Katz (zdk4)}
 
-{\large\today}
+{\Large\today}
 \end{center}
 
 \vspace{1em}
 
 \begin{center}\textbf{Abstract}\end{center}
 
-> Anime can be described as animated, typically Japanese, TV shows and movies. Although once a small industry localized to Japan, anime has become more and more popular around the world over the past decade. In 2017, anime was nearly a $20 billion industry\footnote{https://www.cnn.com/style/article/japan-anime-global-identity-hnk-intl/index.html}. 
+> Anime can be described as animated, typically Japanese, TV shows and movies. Although once a small industry localized to Japan, anime has become more and more popular around the world over the past decade. In 2017, anime was nearly a $20 billion industry\footnote{\color{blue}https://www.cnn.com/style/article/japan-anime-global-identity-hnk-intl/index.html\color{black}}. 
 
 > As such, it is very important for anime studios and producers to understand their viewers. For our project, we aim to analyze viewing patterns of anime users based on their demographics. We use a dataset from MyAnimeList, a website similar to iMBD that allows users to track and rate the anime they’ve watched, and includes such features as gender, location, age, and total anime watchtime. 
 
@@ -38,7 +38,7 @@ header-includes: |
 
 > After clustering, we tried performing \hyperlink{predicting-anime-ratings}{additional regressions} on the dataset with respect to rating. To this end, we added 50 Bag of Words (BOW) features to the dataset, using the English titles of the anime. The most relevant and significant results of this were that users who spent more time watching anime tended to give it lower ratings, corroborating our results in the initial regression, and that having "season" in the title of an anime tended to result in higher overall ratings.  Lastly, interestingly contradicting our initial regression results, we found that users who joined the platform later tended to be more critical in their ratings.
 
-> Finally, we discussed whether or not our analysis was a \hyperlink{wmd-and-fairness}{Weapon of Math Destruction} (WMD) and the potential fairness-related repercussions of our analysis. We determined that our model was *not* a WMD, due to its lack of severity with respect to the applications of it to society as a whole, the only protected demographic being gender and even that being shown to have minimal proportional difference across our dataset.
+> Finally, we discussed whether or not our analysis was a \hyperlink{wmd-and-fairness}{Weapon of Math Destruction} (WMD) and the potential fairness-related repercussions of our analysis. We determined that our model was *not* a WMD, due to its lack of severity with respect to its applications to society as a whole, the only protected demographic being gender and even that being shown to have minimal proportional difference across our dataset.
 
 # Description of data sources
 
@@ -61,17 +61,17 @@ file|description
 `users_cleaned.csv`|cleaned version of `users_filtered.csv`
 
 
-The filtered versions of the files contain only those users with birth date, location, and gender filled. The cleaned versions of the filtered files have outliers removed (e.g., users with excessively large watch times), and nonsensical data removed (such as users with episode counts that exceed the episode count of a given anime). Of these files, we're going to be using the cleaned ones. The missing data that was removed in the cleaning process is not necessary in order to ensure that our analysis is done with sufficient rows; since we started with around 300,000 users, the paring-down of the usercount left us with enough data. 
+The filtered versions of the files contain only those users with birth date, location, and gender filled. The cleaned versions of the filtered files have outliers removed (e.g., users with excessively large watch times), and nonsensical data removed (such as users with episode counts that exceed the episode count of a given anime). Of these files, we're going to be using the cleaned ones. The missing data that was removed in the cleaning process is not necessary in order to ensure that our analysis is done with sufficient rows; since we started with around 300,000 users, the paring-down of the usercount left us with enough data (~20,000 users). 
 
 ## Location data transformation
 
 Since we want to analyze user location as one of our features, we needed to parse the locations given to us by users. Unfortunately, MAL has no standardized way for users to input their locations; instead, users simply type in whatever they want. This led to our having to discard a large quantity of data due to poorly-defined locations.
 
-Furthermore, we decided (for the sake of simplicity) to focus our analysis solely on the users whose location text implied that they were in the United States, with the goal of analyzing location on a state-by-state basis. To do this, we made several dictionaries of locations, and used these dictionaries to parse the location strings given by the users. We created a string-parsing function using these dictionaries and then applied it to the relevant dataframe columns. Once this was done, we were able to isolate the rows which had location data that was convertable to a US state, and put that data into a separate dataframe. Finally, we converted said dataframe back into a CSV to get the final version of the `users_cleaned.csv` dataset.
+Furthermore, we decided (for the sake of simplicity) to focus our analysis solely on the users whose location text implied that they were in the United States, with the goal of analyzing location on a state-by-state basis. To do this, we made several dictionaries of locations, and used these dictionaries to parse the location strings given by the users. We created a string-parsing function using these dictionaries and then applied it to the relevant dataframe columns. Once this was done, we were able to isolate the rows which had location data that was convertible to a US state and put that data into a separate dataframe. Finally, we converted said dataframe back into a CSV to get the final version of the `users_cleaned.csv` dataset.
 
-# Initial regression
+# Initial regression: Predicting anime watchtime
 
-The first question we sought to ask in our project is, "Can we predict how much anime someone has watched?" For this regression, we will only be using the `users_cleaned` dataset with the initial feature engineering described earlier. The dependent variable will be the number of days of anime a user has watched, and the features are listed below.
+The first question we sought to ask in our project is, "Can we predict how much anime someone has watched?" For this regression, we will only be using the `users_cleaned` dataset with the initial feature engineering described earlier. The dependent variable will be the number of days of anime a user has watched, and the features are listed below. Note that days are continuous; e.g., a user could have 20.5 or 0.275 days of anime watched.
 
 ## Feature selection 
 
@@ -98,7 +98,7 @@ Our first approach was to use simple linear regression. Unfortunately, our model
 
 ## Lasso regression
 
-In order to stabilize the model, we ran least squares regression with a Lasso ($\ell_1$) regularizer. In order to choose the regularization parameter $\lambda$ (which will avoid overfitting), we used 5-fold cross-validation and tested 100 possible values of $\lambda$ from 0.001 to 10. The optimal parameter, which we ended up using in the actual regression, was 0.101.
+In order to stabilize the model, we ran least-squares regression with a Lasso ($\ell_1$) regularizer. In order to choose the regularization parameter $\lambda$ (which will avoid overfitting), we used 5-fold cross-validation and tested 100 possible values of $\lambda$ from 0.001 to 10. The optimal parameter, which we ended up using in the actual regression, was 0.101.
 
 The advantage of the Lasso is that it chooses a model that is both stable and sparse. Here are tables showing the *nonzero* weights selected by the regression:
 
@@ -133,7 +133,7 @@ The advantage of the Lasso is that it chooses a model that is both stable and sp
 These results indicate that men are more likely to have more days of anime views, and women are more likely to have fewer anime days. (The regression didn't have enough data points to infer viewership patterns about nonbinary users.) We also see that users who were recently online and users who joined earlier are more likely to have more anime days. Finally, users who had a *lower* average rating (and were more critical of anime in general) were more likely to have more anime hours. The one-hot locations that were selected did contribute to the model's predictive ability, but since these one-hots are inherently collinear, it is unfortunately difficult to make inferences about them.
 
 Importantly, the model did not overfit; the training MSE was 2,238 and the testing MSE was 2,074. 
-Because of scaling, the MSE's are difficult to interpret on their own. Instead, we can use the coefficient of determination $\mathcal{R}^2$ to analyze the effectiveness of this model. The coefficient of determination is a measurement of the proportion of variation in the dependent variable that can be measured by the covariates\footnote{\color{blue}https://en.wikipedia.org/wiki/Coefficient\_of\_determination}. The $\mathcal{R}^2$ for the training data was 0.255, and the $\mathcal{R}^2$ for the testing data was 0.257. 
+Because of scaling, the MSE's are difficult to interpret on their own. Instead, we can use the coefficient of determination $\mathcal{R}^2$ to analyze the effectiveness of this model. The coefficient of determination is a measurement of the proportion of variation in the dependent variable that can be measured by the covariates\footnote{\color{blue}https://en.wikipedia.org/wiki/Coefficient\_of\_determination\color{black}}. The $\mathcal{R}^2$ for the training data was 0.255, and the $\mathcal{R}^2$ for the testing data was 0.257. 
 
 Although these $\mathcal{R}^2$ values may seem low, viewership data is quite noisy, so we were satisfied with this result since our model does give a general sense of whether a given person is more likely to have watched more anime. This will be discussed more in the takeaways section.
 
@@ -163,13 +163,13 @@ age | age of the user, computed from user's date of birth
 average rating | mean of the user's ratings of anime on their anime list
 male | one-hot: user's gender is declared male
 
-Using the full dataset, we sought covariates that ecompassed both past and present users of MyAnimeList. Multiple models were generated using location and join year but negligible or no improvements in clustering were seen. Further, the specific genre interests of users proved far too difficult to extract in the scope of this project but likely would have proved important. For interpretability and simplicity, these four covariates were chosen. 
+Using the full dataset, we sought covariates that encompassed both past and present users of MyAnimeList. Multiple models were generated using location and join year but negligible or no improvements in clustering were seen. Further, the specific genre interests of users proved far too difficult to extract in the scope of this project but likely would have proved important. For interpretability and simplicity, these four covariates were chosen. 
 
-One main question associated with the $k$-means algorithm is the input $k$, the number of clusters. In a dataset with which no known cluster structure exists, we fist had to utilize metric tests to find such input $k$. The most common test is the "elbow test" in which an economical number of clusters is chosen where diminishing returns on the $k$-means loss function begins. As the number of clusters increases, the loss will always decreases so a point is found where adding another cluster doesn't improve modeling. This graph is shown below in blue. There are a few different candidates for optimal so an additional metric test was used. The average silhouette score of a clustering reflects the cohesion between points in a cluster and seperation between clusters. Each point in the graph is assigned such a score ranging from -1 to +1. The higher the score, the better the clusters describe the data. An average is computed across all points as the model's silhouette score. This is graphed below in red. For context, a score of 0.75 is practically exceptional in datasets of this size. 
+One main question associated with the $k$-means algorithm is the input $k$, the number of clusters. In a dataset with which no known cluster structure exists, we first had to utilize metric tests to find such input $k$. The most common test is the "elbow test" in which an economical number of clusters is chosen where diminishing returns on the $k$-means loss function begins. As the number of clusters increases, the loss will always decrease so a point is found where adding another cluster doesn't improve modeling. This graph is shown below in blue. There are a few different candidates for optimal so an additional metric test was used. The average silhouette score of a clustering reflects the cohesion between points in a cluster and separation between clusters. Each point in the graph is assigned such a score with range $(-1, 1)$. The higher the score, the better the clusters describe the data. An average is computed across all points as the model's silhouette score. This is graphed below in red. For context, a score of 0.75 is practically exceptional in datasets of this size. 
 
 ![$k$-means loss graph](Cluster3.png){width=85%}
 
-Although silhouette scores provide a quantitative reasoning to choosing an input $k$, they are not absolutes; in fact, there is an art form to such decision-making. In our modeling, with two clusters, the two centroids differed only in days spent watching, providing little to conclude from with regard to market segmentation. So, we chose to move to three clusters in order to extract an additional differentiation attribute. In this case, that proved to be the binary true/false on the male gender. Below are clustering plots. Keep in mind the multidimensionality of the dataset and clusters.   
+Although silhouette scores provide quantitative reasoning to choosing an input $k$, they are not absolutes; in fact, there is an art form to such decision-making. In our modeling, with two clusters, the two centroids differed only in days spent watching, providing little to conclude from with regard to market segmentation. So, we chose to move to three clusters in order to extract an additional differentiation attribute. In this case, that proved to be the binary true/false on the male gender. Below are clustering plots. Keep in mind the multidimensionality of the dataset and clusters.   
 
 ![Clustering plots](Cluster4.png){width=75%}
 
@@ -177,7 +177,7 @@ Although silhouette scores provide a quantitative reasoning to choosing an input
 
 Above, we found three distinct clusters with the most impactful separating covariate being days spent watching. A silhouette plot for points in each cluster shows the varying cohesion of classified points with the average demarcated. A desired silhouette score plot for points would show steep inclines at high scores and minimize the shallow inclines that result from distant points to centroids. As shown, those who watch the greatest amount of anime tend to be between the ages of 22 and 36 whereas the low volume users tend to range more greatly from 17 to 50 years of age. Next, those leading the pack in viewing also tend to be more critical, likely due to the law of large numbers. Lastly, the quasi-gender plot's centroids show that the least male cluster also consumes the least anime, with the most male consuming the greatest number of days watched.
 
-Although the above clustering was far better than expected for a dataset of this size, we still sought to improve the modeling by excluding noisy points that were furthest from centroids. In an audience of 19,000 U.S. users, there will always be outliers and from a marketing perspective it is not necessary to include them in explaining the vast majority of the audience. To rectify this, we turned to an alternative clustering method called DBSCAN (Density-Based Spatial Clustering of Applications with Noise). DBSCAN is more flexible in its clustering shapes by growing clusters from spatially dense areas and expanding them. DBSCAN also determines its own estimate of the number of clusters through internal silhouette scoring. Again, in need not classify every point as a cluster member. DBSCAN also utilizes min-max scaled covariates. Below is our model with four clusters, 103 points classified as noise (black), and a silhouette score of 0.731. 
+Although the above clustering was far better than expected for a dataset of this size, we still sought to improve the modeling by excluding noisy points that were furthest from centroids. In an audience of 19,000 U.S. users, there will always be outliers and from a marketing perspective, it is not necessary to include them in explaining the vast majority of the audience. To rectify this, we turned to an alternative clustering method called DBSCAN (Density-Based Spatial Clustering of Applications with Noise). DBSCAN is more flexible in its clustering shapes by growing clusters from spatially dense areas and expanding them. DBSCAN also determines its own estimate of the number of clusters through internal silhouette scoring. Again, in need not classify every point as a cluster member. DBSCAN also utilizes min-max scaled covariates. Below is our model with four clusters, 103 points classified as noise (black), and a silhouette score of 0.731. 
 
 ![](Cluster1.png){width=35%}
 ![](Cluster2.png){width=60%}
@@ -189,9 +189,9 @@ Although the above clustering was far better than expected for a dataset of this
 In contrast to $k$-means, here we see heavier reliance on the quasi-gender covariate. There are essentially high and low anime consumption clusters for both encoding options. This model leads to the conclusion that users who watch less also tend to rate zeroes, possibly contributing to not watching more or another concealed reason. Likely due to the DBSCAN algorithm seeing a dense area at rating zero, clustering seemingly treats low raters as very similar but it is unclear why so many users do so.  Lastly, those who watch the least anime and do not declare themselves as male tend to be the least varying in age. 
 
 # Predicting anime ratings
-The next question we wanted to answer was, "Can we predict anime ratings?" To answer this question, we created a new dataset in which each entry represented a single user's rating for a particular anime. We wanted to include demographic covariates from our initial regression, so this dataset was generated using by of `users_cleaned` (US-only) and `animelists_cleaned` on the primary key anime username.
+The next question we wanted to answer was, "Can we predict anime ratings?" To answer this question, we created a new dataset in which each entry represented a single user's rating for a particular anime. We wanted to include demographic covariates from our initial regression, so this dataset was generated using `users_cleaned` (US-only) and `animelists_cleaned` on the primary key anime username.
 
-We note that this is technically a multi-class classification problem, since each user can rate an anime $1,2,...,10$. However, we still use a regression here since we care more about predicting whether an anime is *highly rated* than we do about predicting the exact rating.
+We note that this is technically a multi-class classification problem since each user can rate an anime $1,2,...,10$. However, we still use a regression here since we care more about predicting whether an anime is *highly rated* than we do about predicting the exact rating.
 
 ## Feature selection
 Shown below is a table of the features used in our regression. Since each row is a user and an anime they watched, the goal is to predict how a user will rate a given anime.
@@ -214,7 +214,7 @@ Since the dataset includes every anime each user has watched, it is extremely la
 As in our initial regression, we used a randomized grid-search with 25 iterations for hyperparameter tuning. Ultimately, cross-validation selected a `max_depth` of 53, `learning_rate` of 0.5, and `max_bins` of 100 (this represents how many bins the algorithm can make when it groups features together).
 
 ## Feature Importance (SHAP)
-Since the histogram-based gradient boosting regressor did not have a feature importance attribute, we decided to use SHAP (Shapley Additive Explanations) values instead. SHAP values use a game theory approach to tell us how much each feature contributes to the prediction\footnote{https://christophm.github.io/interpretable-ml-book/shap.html\#shap}\footnote{https://towardsdatascience.com/a-novel-approach-to-feature-importance-shapley-additive-explanations-d18af30fc21b}. Since SHAP can be slow on very large datasets, we used the first 100,000 entries of the training set for this analysis, but that is more than enough data to get a sense of feature importance.
+Since the histogram-based gradient boosting regressor did not have a feature importance attribute, we decided to use SHAP (Shapley Additive Explanations) values instead. SHAP values use a game theory approach to tell us how much each feature contributes to the prediction\footnote{\color{blue}https://christophm.github.io/interpretable-ml-book/shap.html\#shap\color{black}}\footnote{\color{blue}https://towardsdatascience.com/a-novel-approach-to-feature-importance-shapley-additive-explanations-d18af30fc21b\color{black}}. Since SHAP can be slow on very large datasets, we used the first 100,000 entries of the training set for this analysis, but that is more than enough data to get a sense of feature importance.
 
 ![](shap_feature_importance.png){width=50%}
 ![](shap_summary.png){width=50%}
@@ -224,12 +224,12 @@ Since the histogram-based gradient boosting regressor did not have a feature imp
 
 The figure on the left shows the top 10 mean SHAP values, which tell us how important each feature is to the model's predictions. The figure on the right is much more interesting. Each point on the plot is an actual training observation. A negative SHAP value indicates that the feature reduced the predicted rating, and a positive SHAP value indicates that the feature increased the prediction rating. The "Feature Value" gradient tells us how large or small the actual feature was. 
 
-As an example, we see that when users have spent many *days* watching anime, they are more likely to rate any given anime with a lower score, which makes sense since they are probably much more critical of anime in general. We see a similar trend with `age`, although there is a bit more noise there. Interestingly, with `join_year`, we see that a later `join_year` actually predicts a lower rating. This might seem contradicatory, but it is not because `join_year` is substantially different from days spent watching. There are many MAL users who recently joined but still logged all of the anime they had watched in the past on their new account. 
+As an example, we see that when users have spent many *days* watching anime, they are more likely to rate any given anime with a lower score, which makes sense since they are probably much more critical of anime in general. We see a similar trend with `age`, although there is a bit more noise there. Interestingly, with `join_year`, we see that a later `join_year` actually predicts a lower rating. This might seem contradictory, but it is not because `join_year` is substantially different from days spent watching. Many MAL users may have only recently joined despite a previous history of anime-watching, and they may have logged all of the anime they had watched in the past on their new accounts. 
 
 Moving along, since there are many red points on both sides of the SHAP plot for California, we can't conclude how that feature alone impacts the model; it is still an important feature, but its importance might be derived from interactions with other features. This is also the case for gender attributes. Finally, we note that having "season" in the title implies a higher predicted rating. This is completely reasonable, since the anime which are renewed for more seasons (and advertise this fact in their titles) tend to be excellent shows.
 
 ## Results and discussion
-We evaluated our model using a 75:25 train:test split. We achieved a training MSE of 2.33 and a testing MSE of 2.34, indicating that the model did not overfit. The training $\mathcal R^2$ was 0.146 and the testing $\mathcal R^2$ was 0.142. Although the $\mathcal R^2$ values may seem low, it is actually quite good considering the use of the model. If we use the model to make several anime recommendations, it is very likely that the viewer will enjoy at least one of our suggestions. That is, the goal of the model is to predict whether a user will, in the most general terms, enjoy a given anime. Therefore, even if we cannot predict the exact rating, the model will likely be very good at generating recommendations.
+We evaluated our model using a 75:25 train:test split. We achieved a training MSE of 2.33 and a testing MSE of 2.34, indicating that the model did not overfit. The training $\mathcal R^2$ was 0.146 and the testing $\mathcal R^2$ was 0.142. Although the $\mathcal R^2$ values may seem low, they are actually quite good considering the use of the model. If we use the model to make several anime recommendations, it is very likely that the viewer will enjoy at least one of our suggestions. That is, the goal of the model is to predict whether a user will, in the most general terms, enjoy a given anime. Therefore, even if we cannot predict the exact rating, the model will likely be very good at generating recommendations.
 
 # WMD and Fairness
 
@@ -257,12 +257,12 @@ Given the nature of our problem, both in its severity relative to other fields (
 
 # Conclusion
 
-Over all our analysis, we determined a couple of mainly significant things:
+Overall in our analysis, we determined a couple of mainly significant things:
 
  - Users who watch more anime rate it more critically (initial regression, rating prediction)
  - The main age range for anime-watchers is 22 to 36 years (clustering)
  - Anime with more initial success tend to do well in future seasons (bag of words -- rating prediction)
  - Users who identified as male tend to watch more anime than users who identified as female or nonbinary (initial regression, clustering)
 
-This information could be very important to any anime studio deciding which show to produce, or to anime distributors deciding which groups to target their advertising campaigns to for upcoming titles, or even for corporations like Netflix and Crunchyroll deciding which anime to purchase from distributors. The age range and gender demographics are the most useful as they can be directly translated into advertising 
+This information could be very important to any anime studio deciding which show to produce, or to anime distributors deciding which groups to target their advertising campaigns to for upcoming titles, or even for corporations like Netflix and Crunchyroll deciding which anime to purchase from distributors. The age range and gender demographics are the most directly useful as they can be directly translated into advertising, while the information about seasons could be indicative to a studio that they should attempt to adapt additional seasons of an anime that was successful in its first season when they have the chance. The least directly relevant result is the one regarding the critical nature of long-term users. If anything, it could serve as a reminder to studios adapting older works or continuing an anime adaptation for additional seasons that it is very important to live up to the quality of the previous productions or source material, so as not to alienate long-time fans of the original work.
 
